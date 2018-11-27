@@ -1,1 +1,1 @@
-This is a text editor created using JavaFX.
+This is a text editor created using JavaFX. Upon closing the height width and text in the editor is saved using the Settings class. Once the editor is reopened the window will be the same height/width upon closing as well as have the same text.
