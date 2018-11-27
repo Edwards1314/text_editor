@@ -6,10 +6,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.Format;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.beans.value.ChangeListener;
@@ -23,6 +29,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -41,12 +48,14 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 
 public class Lab14 extends Application {
     public Settings settings;
@@ -73,7 +82,17 @@ public class Lab14 extends Application {
     ObservableList <String> Fonts;
     ObservableList <Integer> FontSizes;
     TextField fontField; 
+    Label dateTime;
+    Label caretColumn;
+    Label caretRow;
+    Label fileLabel;
+    int second;
+    int minute;
+    int hour;
     public Text SampleText = new Text("SampleText");
+    int caretPosition;
+    int columns;
+    int rows = 1;
     
     @Override
     public void start(Stage primaryStage) {
@@ -86,6 +105,8 @@ public class Lab14 extends Application {
         createMenus();
         //Creates Toolbar
         createToolbar();
+        //Creates StatusBar
+        createStatusBar();
         root.setTop(vbox);
         Width = settings.getWidth();
         Height = settings.getHeight();
@@ -142,6 +163,9 @@ public class Lab14 extends Application {
         //Gets the current Font from the text Area
         currentFont = textArea.getFont();
         System.out.println("Font on Startup: " + currentFont.getName());
+        textArea.caretPositionProperty().addListener(((observable, oldValue, newValue) -> {
+            getCaretPosition();            
+        }));
         //Adds the TextArea to the center of the BorderPane
         root.setCenter(textArea);
     }
@@ -175,6 +199,19 @@ public class Lab14 extends Application {
                 pasteButton
         );
         vbox.getChildren().add(toolbar);
+    }
+    //creates a StatusBar at the bottom of the editor
+    public void createStatusBar(){
+        HBox hb = new HBox();
+        dateTime = new Label();
+        caretColumn = new Label();
+        caretRow = new Label();
+        initClock();
+        getCaretPosition();
+        fileLabel = new Label(filename);
+        hb.getChildren().addAll(dateTime, new Separator(), caretColumn,
+                new Separator(), caretRow, new Separator(), fileLabel);
+        root.setBottom(hb);
     }
     //creates File menu and File menu items and is returned to createMenus()
     public Menu createFileMenu(){
@@ -259,8 +296,9 @@ public class Lab14 extends Application {
                 fc.setTitle("Open File");
                 //opens the file explorer
                 File file = fc.showOpenDialog(primaryStage);
-                filename = file.getName();
                 currentFile = file;
+                filename = currentFile.getName();
+                fileLabel.setText(filename);
                 if(file != null){
                     try {
                         openFile(file);
@@ -487,6 +525,7 @@ public class Lab14 extends Application {
             fc.setTitle("Save File");
             //opens up the file explorer
             File file = fc.showSaveDialog(primaryStage);
+            filename = file.getName();
             currentFile = file;
             if(file != null){
                 saveFile(textArea.getText(),file);
@@ -740,4 +779,36 @@ public class Lab14 extends Application {
             
         }
     }
+    //Starts the clock for the dateTime Label
+    public void initClock() {
+        Timeline timeline = new Timeline(new KeyFrame(
+        Duration.millis(1000),
+            ae -> setDateTime()));
+        timeline.setCycleCount( Animation.INDEFINITE );
+        timeline.play();
+    }
+    //Sets the text for the dateTime Label
+    public void setDateTime(){
+          Format formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss");
+          Date date = new Date();
+          dateTime.setText(formatter.format(date));
+    }
+    //gets the caret position
+    public void getCaretPosition(){
+        caretPosition = textArea.getCaretPosition();
+        columns = 1;
+        rows = 1;
+        for(int i = 0; i < caretPosition; i++){
+            if (textArea.getText().charAt(i) == '\n'){
+                columns = 1;
+                rows++;
+            }else{
+                columns++;
+            }
+        }
+        caretColumn.setText("Column: " + Integer.toString(columns));
+        caretRow.setText("Row: " + Integer.toString(rows));
+    }
+    //gets the current file name
+    
 }
